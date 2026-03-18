@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orçamento Anual</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Orçamento<br><em>Pessoal</em></h1>
+      <p>Controle anual · Pessoal</p>
+    </div>
+    <div class="year-badge" id="currentYear">2025</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('dashboard', this)">Visão Geral</button>
+    <button class="tab" onclick="showPage('monthly', this)">Por Mês</button>
+    <button class="tab" onclick="showPage('goals', this)">Metas</button>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div id="page-dashboard" class="page active">
+      <div class="metrics" id="metricsBar"></div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Receitas vs Despesas — Ano</h3>
+          <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Composição do Gasto</h3>
+          <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Resumo Mensal</h3>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th>Receitas</th>
+              <th>Despesas</th>
+              <th>Saldo</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MONTHLY PAGE -->
+    <div id="page-monthly" class="page">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem;">
+        <div class="section-title" style="margin:0;">Lançamentos</div>
+        <button class="add-btn" onclick="openModal()">+ Novo Lançamento</button>
+        <button class="add-btn secondary" onclick="openBulkModal()">+ Lote (Rápido)</button>
+      </div>
+
+      <div class="month-selector" id="monthChips"></div>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="transactionsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- GOALS PAGE -->
+    <div id="page-goals" class="page">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem;">
+        <div class="section-title" style="margin:0;">Minhas Metas</div>
+        <button class="add-btn" onclick="openGoalModal()">+ Nova Meta</button>
+      </div>
+      <div class="goals-grid" id="goalsGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- ADD TRANSACTION MODAL -->
+  <div class="modal-overlay" id="txModal">
+    <div class="modal">
+      <h3>Novo Lançamento</h3>
+      <div class="type-toggle">
+        <button class="type-btn active-income" id="btnIncome" onclick="setType('income')">Receita</button>
+        <button class="type-btn" id="btnExpense" onclick="setType('expense')">Despesa</button>
+      </div>
+
+      <div class="form-group">
+        <label>Descrição</label>
+        <input type="text" id="txDesc" placeholder="Ex: Salário, Aluguel...">
+      </div>
+
+      <div class="form-group">
+        <label>Valor (R$)</label>
+        <input type="number" id="txValue" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label>Mês</label>
+        <select id="txMonth"></select>
+      </div>
+
+      <div class="form-group">
+        <label>Categoria</label>
+        <select id="txCategory">
+          <option value="Salário">Salário</option>
+          <option value="Freelance">Freelance</option>
+          <option value="Outros Recebimentos">Outros Recebimentos</option>
+          <option value="Moradia">Moradia</option>
+          <option value="Alimentação">Alimentação</option>
+          <option value="Transporte">Transporte</option>
+          <option value="Saúde">Saúde</option>
+          <option value="Educação">Educação</option>
+          <option value="Lazer">Lazer</option>
+          <option value="Vestuário">Vestuário</option>
+          <option value="Serviços">Serviços</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveTransaction()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BULK TRANSACTIONS MODAL -->
+  <div class="modal-overlay" id="bulkModal">
+    <div class="modal">
+      <h3>Lançamentos em Lote</h3>
+      <p class="help-text">
+        Cole várias linhas. Formato por linha:
+        <span class="code-pill">tipo;descrição;valor;categoria;[mês]</span>
+        <br>
+        Exemplos: <span class="code-pill">income;Salário;7500;Salário;1</span> ou <span class="code-pill">expense;Aluguel;2200;Moradia;1</span>
+      </p>
+      <textarea id="bulkText" rows="10" placeholder="income;Salário;7500;Salário&#10;expense;Aluguel;2200;Moradia"></textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeBulkModal()">Cancelar</button>
+        <button class="btn-save" onclick="addBulkTransactions()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD GOAL MODAL -->
+  <div class="modal-overlay" id="goalModal">
+    <div class="modal">
+      <h3>Nova Meta</h3>
+
+      <div class="form-group">
+        <label>Nome da Meta</label>
+        <input type="text" id="goalName" placeholder="Ex: Viagem, Reserva de emergência...">
+      </div>
+
+      <div class="form-group">
+        <label>Valor da Meta (R$)</label>
+        <input type="number" id="goalTarget" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label>Valor já Guardado (R$)</label>
+        <input type="number" id="goalCurrent" placeholder="0,00" min="0" step="0.01" value="0">
+      </div>
+
+      <div class="form-group">
+        <label>Ícone</label>
+        <select id="goalEmoji">
+          <option value="🏠">🏠 Moradia</option>
+          <option value="✈️">✈️ Viagem</option>
+          <option value="🚗">🚗 Carro</option>
+          <option value="🎓">🎓 Educação</option>
+          <option value="💰">💰 Reserva</option>
+          <option value="🏥">🏥 Saúde</option>
+          <option value="🛍️">🛍️ Compra</option>
+          <option value="📱">📱 Tecnologia</option>
+          <option value="🎯">🎯 Outro</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeGoalModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveGoal()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT GOAL MODAL -->
+  <div class="modal-overlay" id="editGoalModal">
+    <div class="modal">
+      <h3>Editar Meta</h3>
+
+      <div class="form-group">
+        <label>Nome da Meta</label>
+        <input type="text" id="editGoalName" placeholder="Ex: Viagem, Reserva de emergência...">
+      </div>
+
+      <div class="form-group">
+        <label>Valor da Meta (R$)</label>
+        <input type="number" id="editGoalTarget" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label>Valor já Guardado (R$)</label>
+        <input type="number" id="editGoalCurrent" placeholder="0,00" min="0" step="0.01" value="0">
+      </div>
+
+      <div class="form-group">
+        <label>Ícone</label>
+        <select id="editGoalEmoji">
+          <option value="🏠">🏠 Moradia</option>
+          <option value="✈️">✈️ Viagem</option>
+          <option value="🚗">🚗 Carro</option>
+          <option value="🎓">🎓 Educação</option>
+          <option value="💰">💰 Reserva</option>
+          <option value="🏥">🏥 Saúde</option>
+          <option value="🛍️">🛍️ Compra</option>
+          <option value="📱">📱 Tecnologia</option>
+          <option value="🎯">🎯 Outro</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEditGoalModal()">Cancelar</button>
+        <button class="btn-save" onclick="updateGoal()">Salvar alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
