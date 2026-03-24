@@ -3,254 +3,539 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orçamento Anual</title>
+  <title>Painel Financeiro Unificado</title>
 
   <link rel="stylesheet" href="style.css">
 
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+  <style>
+    /* Estilo do Menu Principal de Navegação (Topo) */
+    .global-nav {
+      background-color: #000;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      border-bottom: 3px solid #bb86fc;
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+    }
+
+    .global-nav button {
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .global-nav button:hover {
+      background-color: #555;
+    }
+
+    .global-nav button.active-app {
+      background-color: #bb86fc;
+      color: #000;
+      border-color: #bb86fc;
+    }
+
+    /* Isolamento do CSS do Roadmap para não quebrar o Orçamento */
+    #appRoadmap {
+      --bg-color: #121212;
+      --container-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --accent-color: #bb86fc;
+      --completed-color: #03dac6;
+      
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px;
+      box-sizing: border-box;
+    }
+
+    #appRoadmap .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    #appRoadmap header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--container-bg);
+    }
+
+    #appRoadmap h1, #appRoadmap h2 { color: var(--accent-color); }
+    #appRoadmap h1 { margin-bottom: 5px; }
+    #appRoadmap h2 { margin-top: 30px; border-left: 4px solid var(--accent-color); padding-left: 10px; }
+    #appRoadmap h3 { color: #fff; margin-top: 20px; }
+
+    #appRoadmap .card {
+      background-color: var(--container-bg);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    #appRoadmap .task-list { list-style: none; padding: 0; }
+    #appRoadmap .task-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    #appRoadmap .task-item:hover { background: #333; }
+
+    #appRoadmap input[type="checkbox"] {
+      margin-top: 5px;
+      margin-right: 15px;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--completed-color);
+    }
+
+    #appRoadmap .task-content { flex: 1; }
+    #appRoadmap .task-title { font-weight: bold; color: #fff; display: block; margin-bottom: 5px; }
+    #appRoadmap .task-desc { font-size: 0.95em; color: #bbb; }
+    #appRoadmap .completed .task-title, #appRoadmap .completed .task-desc {
+      text-decoration: line-through;
+      color: #777;
+    }
+
+    #appRoadmap .summary {
+      background-color: rgba(3, 218, 198, 0.1);
+      border-left: 4px solid var(--completed-color);
+      padding: 15px;
+      margin-top: 30px;
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+    }
+
+    #appRoadmap progress {
+      width: 100%;
+      height: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      accent-color: var(--completed-color);
+    }
+  </style>
 </head>
 
 <body>
 
-  <div class="header">
-    <div class="header-left">
-      <h1>Orçamento<br><em>Pessoal</em></h1>
-      <p>Controle anual · Pessoal</p>
+  <nav class="global-nav">
+    <button id="btnBudget" class="active-app" onclick="switchApp('appBudget')">Orçamento Anual</button>
+    <button id="btnRoadmap" onclick="switchApp('appRoadmap')">Roadmap 5K</button>
+  </nav>
+
+  <div id="appBudget">
+    <div class="header">
+      <div class="header-left">
+        <h1>Orçamento<br><em>Pessoal</em></h1>
+        <p>Controle anual · Pessoal</p>
+      </div>
+      <div class="year-badge" id="currentYear">2026</div>
     </div>
-    <div class="year-badge" id="currentYear">2025</div>
-  </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="showPage('dashboard', this)">Visão Geral</button>
-    <button class="tab" onclick="showPage('monthly', this)">Por Mês</button>
-    <button class="tab" onclick="showPage('goals', this)">Metas</button>
-  </div>
+    <div class="tabs">
+      <button class="tab active" onclick="showPage('dashboard', this)">Visão Geral</button>
+      <button class="tab" onclick="showPage('monthly', this)">Por Mês</button>
+      <button class="tab" onclick="showPage('goals', this)">Metas</button>
+    </div>
 
-  <div class="main">
+    <div class="main">
+      <div id="page-dashboard" class="page active">
+        <div class="metrics" id="metricsBar"></div>
 
-    <!-- DASHBOARD PAGE -->
-    <div id="page-dashboard" class="page active">
-      <div class="metrics" id="metricsBar"></div>
-
-      <div class="charts-grid">
-        <div class="chart-card">
-          <h3>Receitas vs Despesas — Ano</h3>
-          <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3>Receitas vs Despesas — Ano</h3>
+            <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3>Composição do Gasto</h3>
+            <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
+          </div>
         </div>
-        <div class="chart-card">
-          <h3>Composição do Gasto</h3>
-          <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Resumo Mensal</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Mês</th>
+                <th>Receitas</th>
+                <th>Despesas</th>
+                <th>Saldo</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTable"></tbody>
+          </table>
         </div>
       </div>
 
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Resumo Mensal</h3>
+      <div id="page-monthly" class="page">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem;">
+          <div class="section-title" style="margin:0;">Lançamentos</div>
+          <button class="add-btn" onclick="openModal()">+ Novo Lançamento</button>
+          <button class="add-btn secondary" onclick="openBulkModal()">+ Lote (Rápido)</button>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Mês</th>
-              <th>Receitas</th>
-              <th>Despesas</th>
-              <th>Saldo</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="summaryTable"></tbody>
-        </table>
+
+        <div class="month-selector" id="monthChips"></div>
+
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="page-goals" class="page">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem;">
+          <div class="section-title" style="margin:0;">Minhas Metas</div>
+          <button class="add-btn" onclick="openGoalModal()">+ Nova Meta</button>
+        </div>
+        <div class="goals-grid" id="goalsGrid"></div>
       </div>
     </div>
 
-    <!-- MONTHLY PAGE -->
-    <div id="page-monthly" class="page">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem;">
-        <div class="section-title" style="margin:0;">Lançamentos</div>
-        <button class="add-btn" onclick="openModal()">+ Novo Lançamento</button>
-        <button class="add-btn secondary" onclick="openBulkModal()">+ Lote (Rápido)</button>
+    <div class="modal-overlay" id="txModal">
+      <div class="modal">
+        <h3>Novo Lançamento</h3>
+        <div class="type-toggle">
+          <button class="type-btn active-income" id="btnIncome" onclick="setType('income')">Receita</button>
+          <button class="type-btn" id="btnExpense" onclick="setType('expense')">Despesa</button>
+        </div>
+
+        <div class="form-group">
+          <label>Descrição</label>
+          <input type="text" id="txDesc" placeholder="Ex: Salário, Aluguel...">
+        </div>
+
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input type="number" id="txValue" placeholder="0,00" min="0" step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Mês</label>
+          <select id="txMonth"></select>
+        </div>
+
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="txCategory">
+            <option value="Salário">Salário</option>
+            <option value="Freelance">Freelance</option>
+            <option value="Outros Recebimentos">Outros Recebimentos</option>
+            <option value="Moradia">Moradia</option>
+            <option value="Alimentação">Alimentação</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Saúde">Saúde</option>
+            <option value="Educação">Educação</option>
+            <option value="Lazer">Lazer</option>
+            <option value="Vestuário">Vestuário</option>
+            <option value="Serviços">Serviços</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+          <button class="btn-save" onclick="saveTransaction()">Salvar</button>
+        </div>
       </div>
+    </div>
 
-      <div class="month-selector" id="monthChips"></div>
-
-      <div class="table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              <th>Categoria</th>
-              <th>Tipo</th>
-              <th>Valor</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="transactionsTable"></tbody>
-        </table>
+    <div class="modal-overlay" id="bulkModal">
+      <div class="modal">
+        <h3>Lançamentos em Lote</h3>
+        <p class="help-text">
+          Cole várias linhas. Formato por linha:
+          <span class="code-pill">tipo;descrição;valor;categoria;[mês]</span>
+          <br>
+          Exemplos: <span class="code-pill">income;Salário;7500;Salário;1</span> ou <span class="code-pill">expense;Aluguel;2200;Moradia;1</span>
+        </p>
+        <textarea id="bulkText" rows="10" placeholder="income;Salário;7500;Salário&#10;expense;Aluguel;2200;Moradia"></textarea>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeBulkModal()">Cancelar</button>
+          <button class="btn-save" onclick="addBulkTransactions()">Adicionar</button>
+        </div>
       </div>
     </div>
 
-    <!-- GOALS PAGE -->
-    <div id="page-goals" class="page">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem;">
-        <div class="section-title" style="margin:0;">Minhas Metas</div>
-        <button class="add-btn" onclick="openGoalModal()">+ Nova Meta</button>
-      </div>
-      <div class="goals-grid" id="goalsGrid"></div>
-    </div>
-
-  </div>
-
-  <!-- ADD TRANSACTION MODAL -->
-  <div class="modal-overlay" id="txModal">
-    <div class="modal">
-      <h3>Novo Lançamento</h3>
-      <div class="type-toggle">
-        <button class="type-btn active-income" id="btnIncome" onclick="setType('income')">Receita</button>
-        <button class="type-btn" id="btnExpense" onclick="setType('expense')">Despesa</button>
-      </div>
-
-      <div class="form-group">
-        <label>Descrição</label>
-        <input type="text" id="txDesc" placeholder="Ex: Salário, Aluguel...">
-      </div>
-
-      <div class="form-group">
-        <label>Valor (R$)</label>
-        <input type="number" id="txValue" placeholder="0,00" min="0" step="0.01">
-      </div>
-
-      <div class="form-group">
-        <label>Mês</label>
-        <select id="txMonth"></select>
-      </div>
-
-      <div class="form-group">
-        <label>Categoria</label>
-        <select id="txCategory">
-          <option value="Salário">Salário</option>
-          <option value="Freelance">Freelance</option>
-          <option value="Outros Recebimentos">Outros Recebimentos</option>
-          <option value="Moradia">Moradia</option>
-          <option value="Alimentação">Alimentação</option>
-          <option value="Transporte">Transporte</option>
-          <option value="Saúde">Saúde</option>
-          <option value="Educação">Educação</option>
-          <option value="Lazer">Lazer</option>
-          <option value="Vestuário">Vestuário</option>
-          <option value="Serviços">Serviços</option>
-          <option value="Outros">Outros</option>
-        </select>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-        <button class="btn-save" onclick="saveTransaction()">Salvar</button>
+    <div class="modal-overlay" id="goalModal">
+      <div class="modal">
+        <h3>Nova Meta</h3>
+        <div class="form-group">
+          <label>Nome da Meta</label>
+          <input type="text" id="goalName" placeholder="Ex: Viagem, Reserva de emergência...">
+        </div>
+        <div class="form-group">
+          <label>Valor da Meta (R$)</label>
+          <input type="number" id="goalTarget" placeholder="0,00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Valor já Guardado (R$)</label>
+          <input type="number" id="goalCurrent" placeholder="0,00" min="0" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+          <label>Ícone</label>
+          <select id="goalEmoji">
+            <option value="🏠">🏠 Moradia</option>
+            <option value="✈️">✈️ Viagem</option>
+            <option value="🚗">🚗 Carro</option>
+            <option value="🎓">🎓 Educação</option>
+            <option value="💰">💰 Reserva</option>
+            <option value="🏥">🏥 Saúde</option>
+            <option value="🛍️">🛍️ Compra</option>
+            <option value="📱">📱 Tecnologia</option>
+            <option value="🎯">🎯 Outro</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeGoalModal()">Cancelar</button>
+          <button class="btn-save" onclick="saveGoal()">Salvar</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- BULK TRANSACTIONS MODAL -->
-  <div class="modal-overlay" id="bulkModal">
-    <div class="modal">
-      <h3>Lançamentos em Lote</h3>
-      <p class="help-text">
-        Cole várias linhas. Formato por linha:
-        <span class="code-pill">tipo;descrição;valor;categoria;[mês]</span>
-        <br>
-        Exemplos: <span class="code-pill">income;Salário;7500;Salário;1</span> ou <span class="code-pill">expense;Aluguel;2200;Moradia;1</span>
-      </p>
-      <textarea id="bulkText" rows="10" placeholder="income;Salário;7500;Salário&#10;expense;Aluguel;2200;Moradia"></textarea>
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeBulkModal()">Cancelar</button>
-        <button class="btn-save" onclick="addBulkTransactions()">Adicionar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ADD GOAL MODAL -->
-  <div class="modal-overlay" id="goalModal">
-    <div class="modal">
-      <h3>Nova Meta</h3>
-
-      <div class="form-group">
-        <label>Nome da Meta</label>
-        <input type="text" id="goalName" placeholder="Ex: Viagem, Reserva de emergência...">
-      </div>
-
-      <div class="form-group">
-        <label>Valor da Meta (R$)</label>
-        <input type="number" id="goalTarget" placeholder="0,00" min="0" step="0.01">
-      </div>
-
-      <div class="form-group">
-        <label>Valor já Guardado (R$)</label>
-        <input type="number" id="goalCurrent" placeholder="0,00" min="0" step="0.01" value="0">
-      </div>
-
-      <div class="form-group">
-        <label>Ícone</label>
-        <select id="goalEmoji">
-          <option value="🏠">🏠 Moradia</option>
-          <option value="✈️">✈️ Viagem</option>
-          <option value="🚗">🚗 Carro</option>
-          <option value="🎓">🎓 Educação</option>
-          <option value="💰">💰 Reserva</option>
-          <option value="🏥">🏥 Saúde</option>
-          <option value="🛍️">🛍️ Compra</option>
-          <option value="📱">📱 Tecnologia</option>
-          <option value="🎯">🎯 Outro</option>
-        </select>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeGoalModal()">Cancelar</button>
-        <button class="btn-save" onclick="saveGoal()">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- EDIT GOAL MODAL -->
-  <div class="modal-overlay" id="editGoalModal">
-    <div class="modal">
-      <h3>Editar Meta</h3>
-
-      <div class="form-group">
-        <label>Nome da Meta</label>
-        <input type="text" id="editGoalName" placeholder="Ex: Viagem, Reserva de emergência...">
-      </div>
-
-      <div class="form-group">
-        <label>Valor da Meta (R$)</label>
-        <input type="number" id="editGoalTarget" placeholder="0,00" min="0" step="0.01">
-      </div>
-
-      <div class="form-group">
-        <label>Valor já Guardado (R$)</label>
-        <input type="number" id="editGoalCurrent" placeholder="0,00" min="0" step="0.01" value="0">
-      </div>
-
-      <div class="form-group">
-        <label>Ícone</label>
-        <select id="editGoalEmoji">
-          <option value="🏠">🏠 Moradia</option>
-          <option value="✈️">✈️ Viagem</option>
-          <option value="🚗">🚗 Carro</option>
-          <option value="🎓">🎓 Educação</option>
-          <option value="💰">💰 Reserva</option>
-          <option value="🏥">🏥 Saúde</option>
-          <option value="🛍️">🛍️ Compra</option>
-          <option value="📱">📱 Tecnologia</option>
-          <option value="🎯">🎯 Outro</option>
-        </select>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeEditGoalModal()">Cancelar</button>
-        <button class="btn-save" onclick="updateGoal()">Salvar alterações</button>
+    <div class="modal-overlay" id="editGoalModal">
+      <div class="modal">
+        <h3>Editar Meta</h3>
+        <div class="form-group">
+          <label>Nome da Meta</label>
+          <input type="text" id="editGoalName" placeholder="Ex: Viagem, Reserva de emergência...">
+        </div>
+        <div class="form-group">
+          <label>Valor da Meta (R$)</label>
+          <input type="number" id="editGoalTarget" placeholder="0,00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Valor já Guardado (R$)</label>
+          <input type="number" id="editGoalCurrent" placeholder="0,00" min="0" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+          <label>Ícone</label>
+          <select id="editGoalEmoji">
+            <option value="🏠">🏠 Moradia</option>
+            <option value="✈️">✈️ Viagem</option>
+            <option value="🚗">🚗 Carro</option>
+            <option value="🎓">🎓 Educação</option>
+            <option value="💰">💰 Reserva</option>
+            <option value="🏥">🏥 Saúde</option>
+            <option value="🛍️">🛍️ Compra</option>
+            <option value="📱">📱 Tecnologia</option>
+            <option value="🎯">🎯 Outro</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeEditGoalModal()">Cancelar</button>
+          <button class="btn-save" onclick="updateGoal()">Salvar alterações</button>
+        </div>
       </div>
     </div>
   </div>
+
+
+  <div id="appRoadmap" style="display: none;">
+    <div class="container">
+      <header>
+        <h1>Roadmap Rumo aos R$ 5.000,00</h1>
+        <p>Acompanhe seu progresso de economia, investimentos e evolução na carreira.</p>
+        <label for="progressBar">Progresso Geral:</label>
+        <progress id="progressBar" value="0" max="100"></progress>
+      </header>
+
+      <div class="card">
+        <h2>1. Onde Guardar: O "Lugar Bom"</h2>
+        <p>O melhor lugar é a Renda Fixa com Liquidez Diária para que o dinheiro renda todo dia e esteja disponível para emergências.</p>
+        <ul class="task-list">
+          <li class="task-item">
+            <input type="checkbox" id="task1" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Abrir/Usar Conta Digital (Nubank, Inter, BTG)</span>
+              <span class="task-desc">Garantir que o dinheiro está rendendo 100% do CDI (mais seguro e rentável que a poupança).</span>
+            </div>
+          </li>
+          <li class="task-item">
+            <input type="checkbox" id="task2" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Conhecer o Tesouro Selic</span>
+              <span class="task-desc">Entender como funciona o investimento mais seguro do Brasil, ideal para a reserva de emergência.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>2. Estratégia de Investimento (A Escada)</h2>
+        <p>Siga estes passos antes de pensar em ações ou criptomoedas.</p>
+        <ul class="task-list">
+          <li class="task-item">
+            <input type="checkbox" id="task3" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Montar Reserva de Emergência</span>
+              <span class="task-desc">Juntar o equivalente a 3 a 6 meses do custo de vida em contas de liquidez diária.</span>
+            </div>
+          </li>
+          <li class="task-item">
+            <input type="checkbox" id="task4" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Automatizar o Aporte Mensal (R$ 555,56)</span>
+              <span class="task-desc">Definir uma data logo após o recebimento do salário para transferir o dinheiro. Tratar como um boleto obrigatório.</span>
+            </div>
+          </li>
+          <li class="task-item">
+            <input type="checkbox" id="task5" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Estudar Diversificação Futura (FIIs)</span>
+              <span class="task-desc">Apenas após a reserva estar completa, começar a estudar Fundos Imobiliários para receber "aluguéis" mensais.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>3. Estratégias para Ganhar Mais Dinheiro</h2>
+        <p>Alavancar sua renda usando seus conhecimentos em Sistemas de Informação, JavaScript e SQL.</p>
+        
+        <h3>No Curto Prazo (Renda Extra)</h3>
+        <ul class="task-list">
+          <li class="task-item">
+            <input type="checkbox" id="task6" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Freelance de Landing Pages</span>
+              <span class="task-desc">Vender sites simples para comércios locais ou clínicas usando o portfólio (R$ 800 a R$ 1.500 por página).</span>
+            </div>
+          </li>
+          <li class="task-item">
+            <input type="checkbox" id="task7" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Manutenção de Banco de Dados</span>
+              <span class="task-desc">Oferecer serviços de limpeza e organização de dados para pequenas empresas com os conhecimentos de SQL do CS50.</span>
+            </div>
+          </li>
+        </ul>
+
+        <h3>No Médio Prazo (Carreira)</h3>
+        <ul class="task-list">
+          <li class="task-item">
+            <input type="checkbox" id="task8" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Focar no Inglês</span>
+              <span class="task-desc">Melhorar o idioma para multiplicar o potencial de salário no futuro.</span>
+            </div>
+          </li>
+          <li class="task-item">
+            <input type="checkbox" id="task9" onchange="saveProgress()">
+            <div class="task-content">
+              <span class="task-title">Buscar Especialização e Certificações</span>
+              <span class="task-desc">Terminar a graduação e buscar certificações em Cloud (AWS ou Azure) para acessar salários iniciais mais altos.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="summary">
+        <strong>Resumo da Ópera:</strong> Coloque seus primeiros aportes em um CDB de 100% do CDI de um banco digital sólido. É simples, seguro e rende todo dia.
+      </div>
+    </div>
+  </div>
+
 
   <script src="script.js" defer></script>
+
+  <script>
+    // --- 1. LÓGICA DE NAVEGAÇÃO PRINCIPAL ---
+    function switchApp(appId) {
+      // Esconde todos os apps
+      document.getElementById('appBudget').style.display = 'none';
+      document.getElementById('appRoadmap').style.display = 'none';
+      
+      // Remove a classe 'active-app' de todos os botões globais
+      document.getElementById('btnBudget').classList.remove('active-app');
+      document.getElementById('btnRoadmap').classList.remove('active-app');
+      
+      // Mostra o app clicado e ativa o botão
+      document.getElementById(appId).style.display = 'block';
+      if (appId === 'appBudget') {
+        document.getElementById('btnBudget').classList.add('active-app');
+      } else {
+        document.getElementById('btnRoadmap').classList.add('active-app');
+      }
+    }
+
+    // --- 2. LÓGICA DO ROADMAP (Salvamento Local) ---
+    function loadProgress() {
+      // Seleciona apenas os checkboxes dentro do Roadmap
+      const checkboxes = document.querySelectorAll('#appRoadmap input[type="checkbox"]');
+      let completedCount = 0;
+
+      checkboxes.forEach(checkbox => {
+        const isChecked = localStorage.getItem(checkbox.id) === 'true';
+        checkbox.checked = isChecked;
+        if (isChecked) {
+          checkbox.closest('.task-item').classList.add('completed');
+          completedCount++;
+        }
+      });
+      updateProgressBar(completedCount, checkboxes.length);
+    }
+
+    function saveProgress() {
+      const checkboxes = document.querySelectorAll('#appRoadmap input[type="checkbox"]');
+      let completedCount = 0;
+
+      checkboxes.forEach(checkbox => {
+        localStorage.setItem(checkbox.id, checkbox.checked);
+        if (checkbox.checked) {
+          checkbox.closest('.task-item').classList.add('completed');
+          completedCount++;
+        } else {
+          checkbox.closest('.task-item').classList.remove('completed');
+        }
+      });
+      updateProgressBar(completedCount, checkboxes.length);
+    }
+
+    function updateProgressBar(completed, total) {
+      const progressBar = document.getElementById('progressBar');
+      if(progressBar) {
+        const percentage = (completed / total) * 100;
+        progressBar.value = percentage || 0;
+      }
+    }
+
+    // Garante que o progresso do Roadmap seja carregado ao abrir a página
+    document.addEventListener('DOMContentLoaded', loadProgress);
+  </script>
+
 </body>
 </html>
